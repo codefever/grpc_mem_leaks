@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "github.com/codefever/grpc_mem_leaks/protos";
+
+package protos;
+
+service CounterService {
+  rpc count (CounterRequest) returns (stream CounterResponse) {}
+}
+
+message CounterRequest {
+  string name = 1;
+  uint64 max_number = 2;
+}
+
+message CounterResponse {
+  uint64 number = 1;
+}
