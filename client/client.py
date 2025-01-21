@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import sys
 logging.basicConfig(level = logging.INFO)
 
 import grpc
@@ -12,7 +13,7 @@ from service_pb2_grpc import CounterServiceStub
 
 
 async def create_stub(addr):
-    channel = grpc.aio.insecure_channel(addr)
+    channel = grpc.aio.insecure_channel(addr, [("grpc.lb_policy_name", "round_robin")])
     return CounterServiceStub(channel)
 
 
@@ -33,7 +34,7 @@ async def serving(stub, idx):
 
 def main():
     loop = asyncio.new_event_loop()
-    stub = loop.run_until_complete(create_stub("localhost:50051"))
+    stub = loop.run_until_complete(create_stub(sys.argv[1]))
 
     tasks = [loop.create_task(serving(stub, idx)) for idx in range(100)]
     loop.run_until_complete(asyncio.gather(*tasks))

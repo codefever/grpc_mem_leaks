@@ -1,29 +1,33 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	log "log/slog"
 	"net"
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	pb "github.com/codefever/grpc_mem_leaks/protos"
 )
+
+var addr = flag.String("addr", ":50051", "")
 
 type server struct {
 	pb.UnimplementedCounterServiceServer
 }
 
 func (s *server) Count(request *pb.CounterRequest, stream pb.CounterService_CountServer) error {
-	log.Info("start to serve", "request", request)
+	p, _ := peer.FromContext(stream.Context())
+	log.Info("start to serve", "request", request, "peer", p)
 
 	for i := uint64(0); i < request.MaxNumber; i++ {
 		time.Sleep(time.Second)
 
 		err := stream.Send(&pb.CounterResponse{Number: i})
 		if err != nil {
-			log.Error("failed to send response", "error", err)
+			//log.Error("failed to send response", "error", err)
 			return err
 		}
 	}
@@ -32,7 +36,9 @@ func (s *server) Count(request *pb.CounterRequest, stream pb.CounterService_Coun
 }
 
 func main() {
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", 50051))
+	flag.Parse()
+
+	listener, err := net.Listen("tcp", *addr)
 	if err != nil {
 		panic(err)
 	}
